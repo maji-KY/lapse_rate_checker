@@ -3,10 +3,32 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="足尾山エリアの気温減率・サーマル到達高度・雲底の7日予報" />
     <title>気温減率チェッカー</title>
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <main id="app">読み込み中…</main>
+    <main>
+      <h1 id="title">気温減率・サーマル到達高度</h1>
+      <form id="controls" class="controls">
+        <label>開始日 <input type="date" id="start" name="date" required /></label>
+        <label>
+          日数
+          <select id="days" name="days"></select>
+        </label>
+        <button type="submit">表示</button>
+        <span id="status" class="status" role="status" aria-live="polite"></span>
+      </form>
+      <div class="meta" id="meta"></div>
+      <ul class="warnings" id="warnings"></ul>
+      <div class="days" id="days-cards"></div>
+      <section class="card" id="week-card" hidden>
+        <h2>サーマル到達高度</h2>
+        <div id="week"></div>
+      </section>
+      <section class="card" id="detail" hidden></section>
+      <footer class="card" id="footer"></footer>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

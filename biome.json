@@ -23,6 +23,9 @@
       },
       "style": {
         "useConst": "error"
+      },
+      "complexity": {
+        "useLiteralKeys": "off"
       }
     }
   },

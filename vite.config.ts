@@ -9,6 +9,5 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts"],
     environment: "node",
-    passWithNoTests: true, // 移植前でテストが無い間も CI を通す
   },
 });

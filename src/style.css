@@ -1,0 +1,251 @@
+:root {
+  --bg: #f7f7f5;
+  --card: #ffffff;
+  --ink: #1f2328;
+  --muted: #6b7280;
+  --line: #d9dbe0;
+  --grid: #eceef1;
+  --c-inversion: #4b5563;
+  --c-stable: #60a5fa;
+  --c-weakish: #fde68a;
+  --c-good: #fb923c;
+  --c-strong: #ef4444;
+  --c-poor: #94a3b8;
+  --c-local: #facc15;
+  --c-top-good: #fb923c;
+  --c-top-strong: #ef4444;
+  --summit: #16a34a;
+  --usable: #9ca3af;
+  --lcl: #0ea5e9;
+  --top: #111827;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a;
+    --card: #1e2125;
+    --ink: #e6e8eb;
+    --muted: #9aa3ad;
+    --line: #353a40;
+    --grid: #2a2e33;
+    --c-inversion: #9ca3af;
+    --c-stable: #3b82f6;
+    --c-weakish: #857a3c;
+    --c-good: #ea580c;
+    --c-strong: #dc2626;
+    --c-poor: #64748b;
+    --c-local: #ca8a04;
+    --c-top-good: #ea580c;
+    --c-top-strong: #dc2626;
+    --summit: #4ade80;
+    --usable: #6b7280;
+    --lcl: #38bdf8;
+    --top: #f9fafb;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font:
+    15px / 1.6 -apple-system,
+    BlinkMacSystemFont,
+    "Hiragino Sans",
+    "Noto Sans JP",
+    sans-serif;
+}
+main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+h1 {
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+h2 {
+  font-size: 17px;
+  margin: 0 0 12px;
+}
+.meta {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.days {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.day {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.day[aria-pressed="true"] {
+  outline: 2px solid var(--top);
+}
+.day .d {
+  font-weight: 600;
+}
+.day .v {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.day .src {
+  font-size: 11px;
+  color: var(--muted);
+}
+.badge {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #111;
+}
+.r-poor {
+  background: var(--c-poor);
+}
+.r-local {
+  background: var(--c-local);
+}
+.r-good {
+  background: var(--c-top-good);
+}
+.r-strong {
+  background: var(--c-top-strong);
+  color: #fff;
+}
+svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+svg text {
+  fill: var(--muted);
+  font-size: 11px;
+}
+svg text.halo {
+  paint-order: stroke;
+  stroke: var(--card);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.legend i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+ul.notes {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+th,
+td {
+  border-bottom: 1px solid var(--line);
+  padding: 4px 6px;
+  text-align: right;
+  white-space: nowrap;
+}
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+.scroll {
+  overflow-x: auto;
+}
+.chart {
+  overflow-x: auto;
+}
+.chart svg {
+  min-width: 640px;
+}
+.trend-note {
+  color: var(--muted);
+  font-size: 13px;
+}
+footer {
+  color: var(--muted);
+  font-size: 12px;
+}
+h2.sub {
+  margin-top: 16px;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 8px 0 6px;
+  font-size: 14px;
+}
+.controls input,
+.controls select,
+.controls button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.controls button {
+  cursor: pointer;
+  font-weight: 600;
+}
+.status {
+  color: var(--muted);
+}
+.warnings {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.warnings .error {
+  color: var(--c-strong);
+  font-weight: 600;
+}
+footer p {
+  margin: 0 0 6px;
+}
+footer a {
+  color: inherit;
+}
+[hidden] {
+  display: none;
+}
