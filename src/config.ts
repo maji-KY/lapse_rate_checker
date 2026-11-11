@@ -51,7 +51,7 @@ export const SETTINGS: Settings = {
   dateCutoffHourJst: 16,
   hours: [9, 10, 11, 12, 13, 14, 15, 16],
   days: 7,
-  maxDays: 16,
+  maxDays: 14,
   displayMinM: 200,
   displayMaxM: 1700,
   forecastUrl: "https://api.open-meteo.com/v1/forecast",
