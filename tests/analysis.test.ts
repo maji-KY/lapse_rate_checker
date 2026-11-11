@@ -142,11 +142,11 @@ describe("過去予報（Python 版 lapse-report と同じ結果になること�
       [load(gsm20260321, "jma_gsm"), load(ecmwf20260321, "ecmwf_ifs025")],
       OPTS,
     );
-    expect(s?.detail).toBe(true);
+    expect(s?.kind).toBe("detail");
     expect(s?.rating.id).toBe("strong");
     expect(Math.round(s?.topM ?? 0)).toBe(2082);
-    expect(s?.peakHour).toBe(15);
-    expect(s?.hours).toHaveLength(SETTINGS.hours.length);
+    expect(s?.kind === "detail" ? s.peakHour : null).toBe(15);
+    expect(s?.kind === "detail" ? s.hours : []).toHaveLength(SETTINGS.hours.length);
     expect(s?.spread.map((p) => [p.model, Math.round(p.topM)])).toEqual([
       ["jma_msm", 2082],
       ["jma_gsm", 2105],
@@ -158,15 +158,14 @@ describe("過去予報（Python 版 lapse-report と同じ結果になること�
     const s = summarizeDay("2026-01-17", load(msm20260117, "jma_msm"), [], OPTS);
     expect(s?.rating.id).toBe("poor");
     expect(Math.round(s?.topM ?? 0)).toBe(596);
-    expect(s?.usableHours).toEqual([]);
+    expect(s?.kind === "detail" ? s.usableHours : null).toEqual([]);
   });
 
   it("詳細モデルが無い日は傾向モデルの中央値", () => {
     const empty: ModelForecast = { model: "jma_msm", groundM: 297, hours: new Map() };
     const trends = [load(gsm20260321, "jma_gsm"), load(ecmwf20260321, "ecmwf_ifs025")];
     const s = summarizeDay("2026-03-21", empty, trends, OPTS);
-    expect(s?.detail).toBe(false);
-    expect(s?.hours).toEqual([]);
+    expect(s?.kind).toBe("trend");
     expect(s?.topM).toBeCloseTo(((s?.spread[0]?.topM ?? 0) + (s?.spread[1]?.topM ?? 0)) / 2);
   });
 
@@ -178,7 +177,7 @@ describe("過去予報（Python 版 lapse-report と同じ結果になること�
       hours: new Map([["2026-03-21", new Map([...day].filter(([h]) => h <= 14))]]),
     };
     const s = summarizeDay("2026-03-21", partial, [load(gsm20260321, "jma_gsm")], OPTS);
-    expect(s?.detail).toBe(false);
+    expect(s?.kind).toBe("trend");
     expect(s?.spread.map((p) => p.model)).toEqual(["jma_msm", "jma_gsm"]);
     expect(s?.notes.at(-1)).toBe("jma_msm は 9〜14時のみ（予報範囲の端）");
   });

@@ -8,7 +8,7 @@
 
 ## 開発
 
-Node.js 26（`.node-version`）と pnpm（`packageManager` で固定）を使う。
+Node.js 24 以上（CI は `.node-version` の 26）と pnpm（`packageManager` で固定）を使う。
 
 ```bash
 pnpm install
@@ -27,7 +27,7 @@ pnpm verify     # lint → 型チェック → テスト → ビルド
 
 ## 公開
 
-`main` への push で GitHub Actions がビルドし、GitHub Pages に公開する（`.github/workflows/pages.yml`）。
+`main` への push で CI（`.github/workflows/ci.yml`）が lint・型チェック・テスト・ビルドを行い、成功したビルドをそのまま GitHub Pages に公開する。
 
 ## データ
 

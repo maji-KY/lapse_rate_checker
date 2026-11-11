@@ -4,6 +4,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # pnpm は公開直後の版を入れない（minimumReleaseAge）ため、提案も数日待ってから出す
+    cooldown:
+      default-days: 3
     groups:
       dev-tools:
         patterns: ["*"]

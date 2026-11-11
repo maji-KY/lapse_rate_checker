@@ -5,6 +5,9 @@
   "description": "足尾山エリアの気温減率・サーマル到達高度の7日予報（ブラウザで Open-Meteo を取得して計算する静的サイト）",
   "type": "module",
   "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

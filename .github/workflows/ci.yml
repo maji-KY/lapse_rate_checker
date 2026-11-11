@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,6 +12,10 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    # PR は新しい push で古い実行を止める。main は公開につながるので止めない
+    concurrency:
+      group: ci-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -23,3 +28,28 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # 検査したビルドそのものを公開する（main のみ）
+      - if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    # 公開に必要な権限は deploy だけに渡す（verify は依存パッケージのコードを実行するため）
+    permissions:
+      pages: write
+      id-token: write
+    # 同時に複数の公開を走らせない。進行中の公開は止めずに最後まで終わらせる
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v6
+      - id: deployment
+        uses: actions/deploy-pages@v5

@@ -12,8 +12,6 @@
   --c-strong: #ef4444;
   --c-poor: #94a3b8;
   --c-local: #facc15;
-  --c-top-good: #fb923c;
-  --c-top-strong: #ef4444;
   --summit: #16a34a;
   --usable: #9ca3af;
   --lcl: #0ea5e9;
@@ -34,8 +32,6 @@
     --c-strong: #dc2626;
     --c-poor: #64748b;
     --c-local: #ca8a04;
-    --c-top-good: #ea580c;
-    --c-top-strong: #dc2626;
     --summit: #4ade80;
     --usable: #6b7280;
     --lcl: #38bdf8;
@@ -127,10 +123,10 @@ h2 {
   background: var(--c-local);
 }
 .r-good {
-  background: var(--c-top-good);
+  background: var(--c-good);
 }
 .r-strong {
-  background: var(--c-top-strong);
+  background: var(--c-strong);
   color: #fff;
 }
 svg {
@@ -141,6 +137,45 @@ svg {
 svg text {
   fill: var(--muted);
   font-size: 11px;
+}
+svg text.ink {
+  fill: var(--ink);
+}
+svg text.value {
+  fill: var(--ink);
+  font-weight: 600;
+}
+svg text.value.small {
+  font-size: 12px;
+}
+svg text.cell {
+  fill: #111;
+  font-size: 10px;
+  opacity: 0.75;
+}
+svg .bar {
+  cursor: pointer;
+}
+svg .gridline {
+  stroke: var(--grid);
+}
+svg .whisker {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+svg .top-line {
+  fill: none;
+  stroke: var(--top);
+  stroke-width: 3;
+}
+svg .lcl-line {
+  fill: none;
+  stroke: var(--lcl);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+svg .top-dot {
+  fill: var(--top);
 }
 svg text.halo {
   paint-order: stroke;
@@ -156,13 +191,23 @@ svg text.halo {
   color: var(--muted);
   margin-top: 8px;
 }
-.legend i {
+.legend .swatch {
   display: inline-block;
   width: 12px;
   height: 12px;
   border-radius: 3px;
   vertical-align: -2px;
   margin-right: 4px;
+}
+.legend .swatch-surface {
+  background: var(--grid);
+  border: 1px dashed var(--muted);
+}
+.legend .swatch-top {
+  background: var(--top);
+}
+.legend .swatch-lcl {
+  background: var(--lcl);
 }
 ul.notes {
   margin: 0 0 12px;
@@ -188,10 +233,8 @@ td:first-child {
 .scroll {
   overflow-x: auto;
 }
-.chart {
-  overflow-x: auto;
-}
-.chart svg {
+/* スマホ幅ではグラフを縮めすぎず、横スクロールで見る */
+.scroll svg {
   min-width: 640px;
 }
 .trend-note {

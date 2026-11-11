@@ -61,12 +61,29 @@ export function buildUrl(
   return `${historical ? settings.historicalUrl : settings.forecastUrl}?${query.toString()}`;
 }
 
+/** 通信できなかった（オフライン・遮断など）。応答の中身の問題（DataError）とは分けて表示する。 */
+export class NetworkError extends Error {
+  override readonly name = "NetworkError";
+}
+
 export async function fetchJson(url: string, signal?: AbortSignal): Promise<unknown> {
-  const res = await fetch(url, signal === undefined ? {} : { signal });
-  const body: unknown = await res.json();
-  if (!res.ok) {
+  let res: Response;
+  try {
+    res = await fetch(url, signal === undefined ? {} : { signal });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") throw e;
+    throw new NetworkError("Open-Meteo に接続できませんでした。通信状態を確認してください", { cause: e });
+  }
+  const text = await res.text();
+  let body: unknown = null;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    // 502 の HTML などは JSON にならない。下で HTTP の状態として扱う
+  }
+  if (!res.ok || body === null) {
     const reason = isRecord(body) && typeof body["reason"] === "string" ? body["reason"] : res.statusText;
-    throw new DataError(`HTTP ${res.status}: ${reason}`);
+    throw new DataError(`HTTP ${res.status}: ${reason || "応答を読めませんでした"}`);
   }
   return body;
 }
@@ -75,14 +92,22 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
+function isNumberOrNullArray(v: unknown): v is readonly (number | null)[] {
+  return Array.isArray(v) && v.every((x: unknown) => x === null || typeof x === "number");
+}
+
+function isStringArray(v: unknown): v is readonly string[] {
+  return Array.isArray(v) && v.every((x: unknown) => typeof x === "string");
+}
+
 function numberOrNullArray(v: unknown, key: string, length: number): readonly (number | null)[] {
   if (v === undefined || v === null) {
     return Array.from({ length }, () => null);
   }
-  if (!Array.isArray(v) || !v.every((x) => x === null || typeof x === "number")) {
+  if (!isNumberOrNullArray(v)) {
     throw new DataError(`hourly.${key}: 数値の配列ではありません`);
   }
-  return v as readonly (number | null)[];
+  return v;
 }
 
 /** "2026-11-12T13:00" → ["2026-11-12", 13]。timezone=Asia/Tokyo で取得しているので文字列のまま JST として扱う。 */
@@ -112,11 +137,15 @@ export function parse(
     throw new DataError(`${model}: elevation か hourly がありません`);
   }
   const rawTimes = hourly["time"];
-  if (!Array.isArray(rawTimes) || !rawTimes.every((t) => typeof t === "string")) {
+  if (!isStringArray(rawTimes)) {
     throw new DataError(`${model}: hourly.time が文字列の配列ではありません`);
   }
-  const times = (rawTimes as readonly string[]).map(splitTime);
+  const times = rawTimes.map(splitTime);
   const series = (key: string) => numberOrNullArray(hourly[key], key, times.length);
+  // 気圧面はモデルによって無いことがあるので null 埋めで許すが、地上気温が無いのは応答の形の問題
+  if (hourly["temperature_2m"] === undefined) {
+    throw new DataError(`${model}: hourly.temperature_2m がありません`);
+  }
   const t2m = series("temperature_2m");
   const td2m = series("dew_point_2m");
   const cloud = series("cloud_cover");

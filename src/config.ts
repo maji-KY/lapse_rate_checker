@@ -42,7 +42,8 @@ export interface Settings {
   readonly pressureLevels: readonly number[];
 }
 
-export const AREAS: readonly Area[] = [
+/** 先頭が既定の地点。空にできないよう非空タプルにしている */
+export const AREAS: readonly [Area, ...Area[]] = [
   { id: "ASHIO", name: "茨城県足尾山エリア", lat: 36.285, lon: 140.138, summitM: 628 },
 ];
 

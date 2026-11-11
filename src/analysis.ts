@@ -6,10 +6,11 @@
  */
 
 import type { Band, LapseClassId, Thresholds, TopClassId } from "./config";
+import { fmtLapse, fmtM, fmtRangeM } from "./format";
 import type { HourProfile, ModelForecast } from "./openmeteo";
 
 export const DRY_ADIABATIC_C_PER_100M = 0.98;
-export const LCL_M_PER_C = 125;
+const LCL_M_PER_C = 125;
 /** 地上より上にこれだけ面があれば、毎時の減率表を出せる（MSM は 6〜7、GSM/ECMWF は 2〜3） */
 const MIN_DETAIL_LEVELS = 3;
 
@@ -48,22 +49,33 @@ export interface ModelPeak {
   readonly hour: number;
 }
 
-export interface DaySummary {
+interface DayBase {
   readonly day: string;
-  /** 詳細モデル（MSM）の毎時プロファイルがある日 */
-  readonly detail: boolean;
-  /** 主の値（詳細日は MSM、傾向日はモデルの中央値） */
-  readonly topM: number;
-  readonly peakHour: number | null;
   readonly rating: Band<TopClassId>;
   /** 全モデルのピーク（ばらつき表示用） */
   readonly spread: readonly ModelPeak[];
-  /** 詳細日のみ */
-  readonly hours: readonly HourResult[];
-  /** 詳細日のみ: top ≥ usableTopM の時刻 */
-  readonly usableHours: readonly number[];
   readonly notes: readonly string[];
 }
+
+/** 詳細モデル（MSM）の毎時プロファイルがそろった日 */
+export interface DetailDay extends DayBase {
+  readonly kind: "detail";
+  /** MSM のピーク時の到達高度 */
+  readonly topM: number;
+  readonly peakHour: number;
+  readonly hours: readonly HourResult[];
+  /** top ≥ usableTopM の時刻 */
+  readonly usableHours: readonly number[];
+}
+
+/** 上空の層が粗いモデルの到達高度だけで見る日（4日目以降、または MSM の範囲の端） */
+export interface TrendDay extends DayBase {
+  readonly kind: "trend";
+  /** モデルのピークの中央値 */
+  readonly topM: number;
+}
+
+export type DaySummary = DetailDay | TrendDay;
 
 export function classify<Id extends string>(bands: readonly Band<Id>[], value: number): Band<Id> {
   const found = bands.find((b) => (b.min === null || value >= b.min) && (b.max === null || value < b.max));
@@ -95,14 +107,14 @@ export function parcelTop(p: HourProfile, groundM: number): { readonly topM: num
   return { topM: pts.at(-1)?.[0] ?? groundM, capped: true };
 }
 
-export function hourTop(p: HourProfile, groundM: number): Top {
+function hourTop(p: HourProfile, groundM: number): Top {
   const { topM: dryM, capped } = parcelTop(p, groundM);
   const lclM = p.td2m === null ? null : groundM + LCL_M_PER_C * (p.t2m - p.td2m);
   const cloudLimited = lclM !== null && lclM < dryM;
   return { dryM, capped, lclM, cloudLimited, topM: cloudLimited && lclM !== null ? lclM : dryM };
 }
 
-export function layers(p: HourProfile, groundM: number, th: Thresholds): Layer[] {
+function layers(p: HourProfile, groundM: number, th: Thresholds): Layer[] {
   const pts = points(p, groundM);
   return pts.slice(1).flatMap(([z1, t1], i) => {
     const prev = pts[i];
@@ -120,7 +132,7 @@ export function analyzeHour(hour: number, p: HourProfile, groundM: number, th: T
 }
 
 /** 乾燥の頂を含む層（ここで頭打ちになる）。地表層とデータ上端超えは除く。 */
-export function capLayer(h: HourResult): Layer | null {
+function capLayer(h: HourResult): Layer | null {
   if (h.top.capped) {
     return null;
   }
@@ -153,12 +165,10 @@ export function modelPeak(f: ModelForecast, day: string): ModelPeak | null {
   return best;
 }
 
-export function hasDetail(f: ModelForecast, day: string, hours: readonly number[]): boolean {
+function hasDetail(f: ModelForecast, day: string, hours: readonly number[]): boolean {
   const d = f.hours.get(day);
   return d !== undefined && hours.every((h) => (d.get(h)?.levels.length ?? 0) >= MIN_DETAIL_LEVELS);
 }
-
-const fmt = (m: number): string => `${Math.round(m).toLocaleString("en-US")}m`;
 
 function median(xs: readonly number[]): number {
   const s = [...xs].sort((a, b) => a - b);
@@ -175,36 +185,36 @@ function detailNotes(
   displayMaxM: number,
 ): string[] {
   const { top } = peak;
-  const notes = [`到達 ${fmt(top.topM)}（${peak.hour}時）: ${rating.label}`];
+  const notes = [`到達 ${fmtM(top.topM)}（${peak.hour}時）: ${rating.label}`];
   if (top.lclM !== null) {
     notes.push(
       top.cloudLimited
-        ? `雲底 ${fmt(top.lclM)} で頭打ち（積雲が出る見込み）`
-        : `雲底 ${fmt(top.lclM)} は到達より上（ブルーサーマルの見込み）`,
+        ? `雲底 ${fmtM(top.lclM)} で頭打ち（積雲が出る見込み）`
+        : `雲底 ${fmtM(top.lclM)} は到達より上（ブルーサーマルの見込み）`,
     );
   }
   const cap = capLayer(peak);
   if (top.capped) {
-    notes.push(`乾燥の頂はデータ上端 ${fmt(top.dryM)} を超える`);
+    notes.push(`乾燥の頂はデータ上端 ${fmtM(top.dryM)} を超える`);
   } else if (cap !== null) {
-    notes.push(`頭打ちの層: ${fmt(cap.bottomM)}〜${fmt(cap.topM)}（${cap.lapse.toFixed(2)}℃/100m・${cap.cls.label}）`);
+    notes.push(`頭打ちの層: ${fmtRangeM(cap.bottomM, cap.topM)}（${fmtLapse(cap.lapse)}・${cap.cls.label}）`);
   }
   const first = usable[0];
   const last = usable.at(-1);
   notes.push(
     first !== undefined && last !== undefined
-      ? `${fmt(th.usableTopM)} 以上に届くのは ${first}〜${last}時`
-      : `${fmt(th.usableTopM)} に届く時間なし`,
+      ? `${fmtM(th.usableTopM)} 以上に届くのは ${first}〜${last}時`
+      : `${fmtM(th.usableTopM)} に届く時間なし`,
   );
   const inv = inversionLayers(peak, displayMaxM)[0];
   notes.push(
     inv === undefined
-      ? `逆転層なし（${fmt(displayMaxM)} まで）`
-      : `逆転層: ${fmt(inv.bottomM)}〜${fmt(inv.topM)}（${inv.lapse.toFixed(2)}℃/100m）`,
+      ? `逆転層なし（${fmtM(displayMaxM)} まで）`
+      : `逆転層: ${fmtRangeM(inv.bottomM, inv.topM)}（${fmtLapse(inv.lapse)}）`,
   );
   const rough = roughLayer(peak, th);
   if (rough !== null) {
-    notes.push(`荒れ注意: ${fmt(rough.bottomM)}〜${fmt(rough.topM)} が ${rough.lapse.toFixed(2)}℃/100m`);
+    notes.push(`荒れ注意: ${fmtRangeM(rough.bottomM, rough.topM)} が ${fmtLapse(rough.lapse)}`);
   }
   return notes;
 }
@@ -232,8 +242,8 @@ export function summarizeDay(
     const usable = hrs.filter((r) => r.top.topM >= th.usableTopM).map((r) => r.hour);
     const rating = classify(th.topClasses, peak.top.topM);
     return {
+      kind: "detail",
       day,
-      detail: true,
       topM: peak.top.topM,
       peakHour: peak.hour,
       rating,
@@ -252,13 +262,13 @@ export function summarizeDay(
   const tops = peaks.map((p) => p.topM);
   const med = median(tops);
   const rating = classify(th.topClasses, med);
-  const notes = [`傾向（${peaks.length}モデル）: 中央 ${fmt(med)}・${rating.label}`];
+  const notes = [`傾向（${peaks.length}モデル）: 中央 ${fmtM(med)}・${rating.label}`];
   if (peaks.length > 1) {
-    notes.push(`モデル間の幅 ${fmt(Math.min(...tops))}〜${fmt(Math.max(...tops))}`);
+    notes.push(`モデル間の幅 ${fmtRangeM(Math.min(...tops), Math.max(...tops))}`);
   }
-  if (partial !== null && detailHours !== undefined) {
-    const hs = [...detailHours.keys()].sort((a, b) => a - b);
+  if (partial !== null) {
+    const hs = [...(detailHours?.keys() ?? [])].sort((a, b) => a - b);
     notes.push(`${detail.model} は ${hs[0]}〜${hs.at(-1)}時のみ（予報範囲の端）`);
   }
-  return { day, detail: false, topM: med, peakHour: null, rating, spread: peaks, hours: [], usableHours: [], notes };
+  return { kind: "trend", day, topM: med, rating, spread: peaks, notes };
 }
