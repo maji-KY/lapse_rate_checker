@@ -1,0 +1,25 @@
+{
+  "name": "lapse-rate-checker",
+  "private": true,
+  "version": "0.1.0",
+  "description": "足尾山エリアの気温減率・サーマル到達高度の7日予報（ブラウザで Open-Meteo を取得して計算する静的サイト）",
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "check": "biome check --write",
+    "lint": "biome ci",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  }
+}
